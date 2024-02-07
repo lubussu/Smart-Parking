@@ -1,0 +1,114 @@
+{
+  "datasource": {
+    "uid": "a4a7c08b-b704-4d70-ae7e-e601434b15f3",
+    "type": "mysql"
+  },
+  "description": "For each hour, shows the avg of the number of cars in the parking.",
+  "fieldConfig": {
+    "defaults": {
+      "custom": {
+        "lineWidth": 1,
+        "fillOpacity": 80,
+        "gradientMode": "none",
+        "axisPlacement": "left",
+        "axisLabel": "",
+        "axisColorMode": "text",
+        "axisBorderShow": false,
+        "scaleDistribution": {
+          "type": "linear"
+        },
+        "axisCenteredZero": false,
+        "hideFrom": {
+          "tooltip": false,
+          "viz": false,
+          "legend": false
+        },
+        "thresholdsStyle": {
+          "mode": "off"
+        },
+        "axisGridShow": true
+      },
+      "unitScale": true,
+      "color": {
+        "mode": "continuous-GrYlRd"
+      },
+      "mappings": [],
+      "thresholds": {
+        "mode": "absolute",
+        "steps": [
+          {
+            "color": "green",
+            "value": null
+          }
+        ]
+      }
+    },
+    "overrides": []
+  },
+  "gridPos": {
+    "h": 8,
+    "w": 16,
+    "x": 0,
+    "y": 0
+  },
+  "id": 1,
+  "interval": "1d",
+  "options": {
+    "orientation": "auto",
+    "xTickLabelRotation": 0,
+    "xTickLabelSpacing": 0,
+    "showValue": "auto",
+    "stacking": "none",
+    "groupWidth": 0.78,
+    "barWidth": 0.85,
+    "barRadius": 0,
+    "fullHighlight": false,
+    "tooltip": {
+      "mode": "single",
+      "sort": "desc"
+    },
+    "legend": {
+      "showLegend": false,
+      "displayMode": "list",
+      "placement": "right",
+      "calcs": []
+    },
+    "colorByField": "AVG_Auto",
+    "xField": "Hour"
+  },
+  "pluginVersion": "10.3.1",
+  "targets": [
+    {
+      "datasource": {
+        "type": "mysql",
+        "uid": "a4a7c08b-b704-4d70-ae7e-e601434b15f3"
+      },
+      "dataset": "smart_parking",
+      "editorMode": "code",
+      "format": "table",
+      "rawQuery": true,
+      "rawSql": "SELECT\n  cars_per_day.Ora AS Hour,\n  FLOOR(AVG(cars_per_day.NumAuto)) AS AVG_Auto\nFROM\n  (\n    SELECT\n      tmp.Giorno AS Giorno,\n      tmp.Ora + 1 AS Ora,\n      CASE\n        WHEN tmp.Giorno <> @prev_giorno THEN @total := tmp.Auto\n        ELSE @total := @total + tmp.Auto\n      END AS NumAuto,\n      @prev_giorno := tmp.Giorno AS prev_giorno\n    FROM\n      (\n        SELECT\n          COALESCE(A.DayIN, B.DayOUT) AS Giorno,\n          COALESCE(A.OraIN, B.OraOUT) AS Ora,\n          COALESCE(A.Ingressi, 0) - COALESCE(B.Uscite, 0) AS Auto\n        FROM\n          (\n            SELECT\n              DATE(Timestamp) AS DayIN,\n              HOUR(Timestamp) AS OraIN,\n              COUNT(*) AS Ingressi\n            FROM smart_parking.SensorData\n            WHERE Sensor_MAC = 'f4ce3605c3a3'\n            GROUP BY DATE(Timestamp), HOUR(Timestamp)\n          ) A\n          RIGHT JOIN (\n            SELECT\n              DATE(Timestamp) AS DayOUT,\n              HOUR(Timestamp) AS OraOUT,\n              COUNT(*) AS Uscite\n            FROM smart_parking.SensorData\n            WHERE Sensor_MAC = 'f4ce368efc62'\n            GROUP BY DATE(Timestamp), HOUR(Timestamp)\n          ) B ON A.OraIN = B.OraOUT AND A.DayIN = B.DayOUT\n      ) tmp\n      INNER JOIN (\n        SELECT\n          @total := 0,\n          @prev_giorno := NULL\n      ) r\n    ORDER BY\n      tmp.Giorno,\n      tmp.Ora\n  ) AS cars_per_day\nGROUP BY\n  cars_per_day.Ora;",
+      "refId": "A",
+      "sql": {
+        "columns": [
+          {
+            "parameters": [],
+            "type": "function"
+          }
+        ],
+        "groupBy": [
+          {
+            "property": {
+              "type": "string"
+            },
+            "type": "groupBy"
+          }
+        ],
+        "limit": 50
+      },
+      "table": "SensorData"
+    }
+  ],
+  "title": "AVG Number of cars per hour",
+  "type": "barchart"
+}

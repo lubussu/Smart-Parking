@@ -1,0 +1,116 @@
+{
+  "datasource": {
+    "type": "mysql",
+    "uid": "a4a7c08b-b704-4d70-ae7e-e601434b15f3"
+  },
+  "description": "Air quality values ​​in relation to the number of cars for a given date",
+  "fieldConfig": {
+    "defaults": {
+      "custom": {
+        "drawStyle": "line",
+        "lineInterpolation": "linear",
+        "barAlignment": 0,
+        "lineWidth": 1,
+        "fillOpacity": 0,
+        "gradientMode": "none",
+        "spanNulls": false,
+        "insertNulls": false,
+        "showPoints": "auto",
+        "pointSize": 5,
+        "stacking": {
+          "mode": "none",
+          "group": "A"
+        },
+        "axisPlacement": "auto",
+        "axisLabel": "",
+        "axisColorMode": "text",
+        "axisBorderShow": false,
+        "scaleDistribution": {
+          "type": "linear"
+        },
+        "axisCenteredZero": false,
+        "hideFrom": {
+          "tooltip": false,
+          "viz": false,
+          "legend": false
+        },
+        "thresholdsStyle": {
+          "mode": "off"
+        }
+      },
+      "unitScale": true,
+      "color": {
+        "mode": "palette-classic"
+      },
+      "mappings": [],
+      "thresholds": {
+        "mode": "absolute",
+        "steps": [
+          {
+            "color": "green",
+            "value": null
+          },
+          {
+            "color": "red",
+            "value": 80
+          }
+        ]
+      }
+    },
+    "overrides": []
+  },
+  "gridPos": {
+    "h": 12,
+    "w": 22,
+    "x": 0,
+    "y": 0
+  },
+  "id": 2,
+  "interval": "10m",
+  "options": {
+    "tooltip": {
+      "mode": "single",
+      "sort": "none"
+    },
+    "legend": {
+      "showLegend": true,
+      "displayMode": "list",
+      "placement": "bottom",
+      "calcs": []
+    }
+  },
+  "pluginVersion": "10.3.1",
+  "targets": [
+    {
+      "dataset": "mysql",
+      "datasource": {
+        "type": "mysql",
+        "uid": "a4a7c08b-b704-4d70-ae7e-e601434b15f3"
+      },
+      "editorMode": "code",
+      "format": "table",
+      "rawQuery": true,
+      "rawSql": "SELECT\n  Subquery.Timestamp,\n  Subquery.Value AS AirMeasurement,\n  ( SELECT COUNT(*)\n    FROM SensorData\n    WHERE\n      Sensor_MAC = 'f4ce3605c3a3'\n      AND DATE(timestamp) = '2024-01-30'\n      AND Timestamp < Subquery.Timestamp\n  ) - \n  ( SELECT COUNT(*)\n    FROM SensorData\n    WHERE\n      Sensor_MAC = 'f4ce368efc62'\n      AND DATE(timestamp) = '2024-01-30'\n      AND Timestamp < Subquery.Timestamp\n  ) AS NumberOfCars\nFROM\n  ( SELECT Value, Timestamp\n    FROM SensorData\n    WHERE\n      Topic = 'nox'\n      AND DATE(timestamp) = '2024-01-30'\n  ) Subquery;",
+      "refId": "A",
+      "sql": {
+        "columns": [
+          {
+            "parameters": [],
+            "type": "function"
+          }
+        ],
+        "groupBy": [
+          {
+            "property": {
+              "type": "string"
+            },
+            "type": "groupBy"
+          }
+        ],
+        "limit": 50
+      }
+    }
+  ],
+  "title": "Air Quality Values",
+  "type": "timeseries"
+}

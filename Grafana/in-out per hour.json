@@ -1,0 +1,121 @@
+{
+  "datasource": {
+    "type": "mysql",
+    "uid": "a4a7c08b-b704-4d70-ae7e-e601434b15f3"
+  },
+  "description": "",
+  "fieldConfig": {
+    "defaults": {
+      "custom": {
+        "lineWidth": 1,
+        "fillOpacity": 80,
+        "gradientMode": "none",
+        "axisPlacement": "left",
+        "axisLabel": "",
+        "axisColorMode": "text",
+        "axisBorderShow": false,
+        "scaleDistribution": {
+          "type": "linear"
+        },
+        "axisCenteredZero": false,
+        "hideFrom": {
+          "tooltip": false,
+          "viz": false,
+          "legend": false
+        },
+        "thresholdsStyle": {
+          "mode": "off"
+        },
+        "axisGridShow": true
+      },
+      "unitScale": true,
+      "color": {
+        "mode": "continuous-GrYlRd"
+      },
+      "mappings": [],
+      "thresholds": {
+        "mode": "absolute",
+        "steps": [
+          {
+            "color": "green",
+            "value": null
+          },
+          {
+            "color": "#EAB839",
+            "value": 20
+          },
+          {
+            "color": "red",
+            "value": 40
+          }
+        ]
+      }
+    },
+    "overrides": []
+  },
+  "gridPos": {
+    "h": 8,
+    "w": 16,
+    "x": 0,
+    "y": 8
+  },
+  "id": 2,
+  "interval": "1d",
+  "options": {
+    "orientation": "auto",
+    "xTickLabelRotation": 0,
+    "xTickLabelSpacing": 0,
+    "showValue": "auto",
+    "stacking": "none",
+    "groupWidth": 0.78,
+    "barWidth": 0.85,
+    "barRadius": 0,
+    "fullHighlight": false,
+    "tooltip": {
+      "mode": "single",
+      "sort": "desc"
+    },
+    "legend": {
+      "showLegend": false,
+      "displayMode": "list",
+      "placement": "right",
+      "calcs": []
+    },
+    "xField": "Ora"
+  },
+  "pluginVersion": "10.3.1",
+  "targets": [
+    {
+      "dataset": "smart_parking",
+      "datasource": {
+        "type": "mysql",
+        "uid": "a4a7c08b-b704-4d70-ae7e-e601434b15f3"
+      },
+      "editorMode": "code",
+      "format": "table",
+      "rawQuery": true,
+      "rawSql": "SELECT tmp.Ora AS Ora,\n        FLOOR(AVG(tmp.Ingressi)) AS Ingressi,\n        FLOOR(AVG(tmp.Uscite)) AS Uscite\nFROM\n( \n    SELECT COALESCE(A.DayIN, B.DayOUT) AS Giorno,\n        COALESCE(A.OraIN, B.OraOUT) AS Ora,\n        COALESCE(A.Ingressi, 0) AS Ingressi,\n        COALESCE(B.Uscite, 0) AS Uscite\n    FROM\n        (SELECT DATE(Timestamp) AS DayIN, HOUR(Timestamp) AS OraIN, COUNT(*) AS Ingressi\n        FROM smart_parking.SensorData\n        WHERE Sensor_MAC = 'f4ce3605c3a3'\n        GROUP BY DATE(Timestamp), HOUR(Timestamp)) A\n        RIGHT JOIN\n        (SELECT DATE(Timestamp) AS DayOUT, HOUR(Timestamp) AS OraOUT, COUNT(*) AS Uscite\n        FROM smart_parking.SensorData\n        WHERE Sensor_MAC = 'f4ce368efc62'\n        GROUP BY DATE(Timestamp), HOUR(Timestamp)) B ON A.OraIN = B.OraOUT AND A.DayIN = B.DayOUT\n) AS tmp\nGROUP BY tmp.Ora;",
+      "refId": "A",
+      "sql": {
+        "columns": [
+          {
+            "parameters": [],
+            "type": "function"
+          }
+        ],
+        "groupBy": [
+          {
+            "property": {
+              "type": "string"
+            },
+            "type": "groupBy"
+          }
+        ],
+        "limit": 50
+      },
+      "table": "SensorData"
+    }
+  ],
+  "title": "AVG Number of entrance/exit per hour",
+  "type": "barchart"
+}
